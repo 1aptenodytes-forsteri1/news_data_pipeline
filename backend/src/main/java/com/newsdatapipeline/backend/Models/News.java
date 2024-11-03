@@ -1,8 +1,6 @@
 package com.newsdatapipeline.backend.Models;
 
 import org.newspipeline.Article;
-
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class News implements Article {

@@ -7,10 +7,8 @@ import org.newspipeline.WebsitePlugin;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
-
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ServiceLoader;
@@ -24,7 +22,8 @@ public class PluginService {
     PluginService() throws IOException {
         loader = loadPlugins();
     }
-    public Flux<Article> getWebsitesArticles(Location location){
+
+    public Flux<Article> getWebsitesArticles(Location location) {
         return Flux.fromIterable(loader)
                 .flatMap(element -> element.getArticles(location))
                 .subscribeOn(Schedulers.boundedElastic());
@@ -42,8 +41,8 @@ public class PluginService {
             }
 
             urlClassLoader = new URLClassLoader(jarUrls, PluginService.class.getClassLoader());
-                ServiceLoader<WebsitePlugin> serviceLoader = ServiceLoader.load(WebsitePlugin.class, urlClassLoader);
-                return serviceLoader;
+            ServiceLoader<WebsitePlugin> serviceLoader = ServiceLoader.load(WebsitePlugin.class, urlClassLoader);
+            return serviceLoader;
 
         } else {
             System.out.println("No plugins found in " + PLUGIN_DIR);

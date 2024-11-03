@@ -2,8 +2,6 @@ package com.newsdatapipeline.backend.Models;
 
 import org.newspipeline.Location;
 
-import java.util.Objects;
-
 public class Settlement implements Location {
     private String adminCode1;
     private String adminName1;
@@ -60,6 +58,7 @@ public class Settlement implements Location {
     public void setPopulation(Integer population) {
         this.population = population;
     }
+
     public String getFcodeName() {
         return fcodeName;
     }
