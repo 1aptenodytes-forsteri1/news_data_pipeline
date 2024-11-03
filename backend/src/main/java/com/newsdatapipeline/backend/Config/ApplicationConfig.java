@@ -20,16 +20,6 @@ import java.time.Duration;
 @Configuration
 @EnableConfigurationProperties(ConfigFileTemplate.class)
 public class ApplicationConfig {
-//    @Bean
-//    public WebClient webClient(WebClient.Builder builder) {
-//        HttpClient httpClient = HttpClient.create()
-//                .responseTimeout(Duration.ofSeconds(20))
-//                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
-//
-//        return builder
-//                .clientConnector(new ReactorClientHttpConnector(httpClient))
-//                .build();
-//    }
     @Bean
     public WebClient createWebClient() {
         ExchangeStrategies strategies = ExchangeStrategies.builder()

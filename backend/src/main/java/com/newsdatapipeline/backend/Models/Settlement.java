@@ -1,11 +1,13 @@
 package com.newsdatapipeline.backend.Models;
 
+import org.newspipeline.Location;
+
 import java.util.Objects;
 
-public class Settlement {
+public class Settlement implements Location {
     private String adminCode1;
     private String adminName1;
-    private String name;
+    private String toponymName;
     private String lng;
     private String lat;
     private Integer population;
@@ -27,12 +29,12 @@ public class Settlement {
         this.adminName1 = adminName1;
     }
 
-    public String getName() {
-        return name;
+    public String getToponymName() {
+        return toponymName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setToponymName(String toponymName) {
+        this.toponymName = toponymName;
     }
 
     public String getLng() {

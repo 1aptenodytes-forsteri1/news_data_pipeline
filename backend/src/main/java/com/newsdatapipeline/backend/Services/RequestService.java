@@ -25,7 +25,7 @@ public class RequestService {
     }
     public String getNewsRequest(NewsRequest getNewsRequest){
         String request = getNewsRequest.getDataAPI().getLink();
-        return request.replace("%CITYNAME", getNewsRequest.getSettlement().getName())
+        return request.replace("%CITYNAME", getNewsRequest.getSettlement().getToponymName())
                 .replace("%STATENAME", getNewsRequest.getSettlement().getAdminName1())
                 .replace("%STATECODE", getNewsRequest.getSettlement().getAdminCode1());
     }

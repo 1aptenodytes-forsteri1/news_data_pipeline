@@ -3,6 +3,7 @@ package com.newsdatapipeline.backend.Services;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.newsdatapipeline.backend.Config.ConfigFileTemplate;
 import com.newsdatapipeline.backend.Models.*;
+import org.newspipeline.Article;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -19,15 +20,16 @@ public class NewsService {
     private final ConfigFileTemplate configFileTemplate;
     private final CheckingService checkingService;
     private final RequestService requestService;
-    NewsService(WebClient webClient, ConfigFileTemplate configFileTemplate, RequestService requestService, CheckingService checkingService){
+    private final PluginService pluginService;
+    NewsService(WebClient webClient, ConfigFileTemplate configFileTemplate, RequestService requestService, CheckingService checkingService, PluginService pluginService){
         this.webClient = webClient;
         this.configFileTemplate = configFileTemplate;
         this.requestService = requestService;
         this.checkingService = checkingService;
+        this.pluginService = pluginService;
     }
-    public Flux<News> getNews(Settlement settlement){
+    public Flux<Article> getNews(Settlement settlement){
         List<NewsRequest> requestsList = new ArrayList<>();
-        Set<News> newsSet = new HashSet<>();
         for (DataAPI dataAPI : configFileTemplate.getNewsAPIs()){
             requestsList.add(new NewsRequest(settlement, dataAPI));
         }
@@ -36,20 +38,16 @@ public class NewsService {
                         .uri(requestService.getNewsRequest(request))
                         .retrieve()
                         .bodyToFlux(JsonNode.class)
-                        .onErrorResume(e->Flux.empty())
+                        //.onErrorResume(e->Flux.empty())
                         .filter(checkingService::isNotEmptyJsonNode)
                         .flatMap(response ->  parseResponse(response,request.getDataAPI(),request.getSettlement()))
                         .flatMap(checkingService::checkArticles)
                         .onErrorResume(e->Flux.empty())
-                        .doOnComplete(() -> System.out.println("Stream completed"))
-                        .doFinally(signalType -> System.out.println("Connection closed"))
-
 
                 )
+                .mergeWith(pluginService.getWebsitesArticles(settlement))
                 .distinct()
-                .onErrorResume(e->Mono.empty())
-                .doOnComplete(() -> System.out.println("Main stream completed"))
-                .doFinally(signalType -> System.out.println("Main connection closed"));
+                .onErrorResume(e->Mono.empty());
 //                .subscribe(result -> {
 //                    try {
 //                        checkingService.checkArticles(newsSet, result);
@@ -81,12 +79,12 @@ public class NewsService {
         }
         return jsonNodes;
     }
-    private Flux<News> parseResponse(JsonNode jsonNode, DataAPI dataAPI, Settlement settlement){
+    private Flux<Article> parseResponse(JsonNode jsonNode, DataAPI dataAPI, Settlement settlement){
         return Flux.create(element -> {
             for(JsonNode node : jsonNode.get(dataAPI.getResponseListName())){
                 element.next(new News(checkingService.removeQuotationMarks(node.get(dataAPI.getResponseLink()).toString())
                         ,checkingService.removeQuotationMarks(node.get(dataAPI.getResponseTitle()).toString())
-                        ,settlement.getName())
+                        ,settlement.getToponymName())
                 );
             }
             element.complete();
