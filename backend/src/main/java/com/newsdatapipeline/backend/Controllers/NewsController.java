@@ -21,7 +21,7 @@ public class NewsController {
     }
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<Article> getNews(@RequestParam String name) {
+    public Flux<Article> getNews(@RequestParam String name) throws InterruptedException {
         return newsService.getNews(locationService.getSettlementData(name));
     }
 }

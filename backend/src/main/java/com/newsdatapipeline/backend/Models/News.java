@@ -7,12 +7,21 @@ public class News implements Article {
     private String url;
     private String title;
     private String location;
-
-    public News(String url, String title, String location) {
+    private String image;
+    private String date;
+    public News(String url, String title, String location, String date, String image) {
         this.url = url;
         this.title = title;
         this.location = location;
+        this.date = date;
+        this.image = image;
+    }
+    public void setImage(String image) {
+        this.image = image;
+    }
 
+    public void setDate(String date) {
+        this.date = date;
     }
 
     @Override
@@ -46,6 +55,16 @@ public class News implements Article {
 
     public String getLocation() {
         return location;
+    }
+
+    @Override
+    public String getTime() {
+        return date;
+    }
+
+    @Override
+    public String getImageUrl() {
+        return image;
     }
 
     public void setLocation(String location) {

@@ -5,6 +5,32 @@ public class DataAPI {
     private String responseListName;
     private String responseTitle;
     private String responseLink;
+    private String responseImageUrl;
+    private String responseDate;
+    private String dateFormat;
+    public String getResponseImageUrl() {
+        return responseImageUrl;
+    }
+
+    public void setResponseImageUrl(String responseImageUrl) {
+        this.responseImageUrl = responseImageUrl;
+    }
+
+    public String getResponseDate() {
+        return responseDate;
+    }
+
+    public void setResponseDate(String responseDate) {
+        this.responseDate = responseDate;
+    }
+
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
+    }
 
     public String getResponseListName() {
         return responseListName;

@@ -26,9 +26,11 @@ public class CheckingService {
         Article article = news;
         return webClient.get()
                 .uri(news.getUrl())
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(response -> article)
-                .onErrorResume(e -> Mono.empty());
+                .exchangeToMono(clientResponse -> {
+                    if(clientResponse.statusCode().isError() || article.getUrl().equals("https://removed.com")){
+                        return Mono.empty();
+                    }else return Mono.just(article);
+                })
+                .onErrorResume(e->Mono.empty());
     }
 }

@@ -7,75 +7,94 @@ import org.jsoup.select.Elements;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-public class NewsBreakParser implements WebsitePlugin {
+public class NewsBreakParser implements WebsitePlugin{
 
     @Override
     public Flux<Article> getArticles(Location location) {
         LinkBuilder linkBuilder;
         linkBuilder = new LinkBuilder(location);
         return Flux.create(element -> {
-                    Document document;
-                    try {
-                        document = Jsoup.connect(linkBuilder.getNextPage()).get();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    if (!document.select("p.font-black.mb-2.cursor-pointer.lg\\:text-28.md\\:text-2xl.text-xl.flex.items-center").text().equalsIgnoreCase(location.getToponymName())){
-                        element.complete();
-                    }
-                    Elements divs = document.select("div.flex-1.mr-3");
-                while (true){
-                    if (!divs.isEmpty()){
-                        divs.forEach(element::next);
-                    }else{
+            try {
+                Document document;
+                while (true) {
+
+                    document = Jsoup.connect(linkBuilder.getNextPage()).get();
+
+                    if (!document.selectFirst("div.font-black.md\\:mb-2.cursor-pointer.lg\\:text-22.md\\:text-2xl.text-xl.flex.items-start").text()
+                            .equalsIgnoreCase(location.getToponymName())) {
                         break;
                     }
-                    try {
-                        divs = Jsoup.connect(linkBuilder.getNextPage()).get().select("div.flex-1.mr-3");
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+
+                    Elements divs = document.select("div.border-b.border-gray-200");
+
+                    if (divs.isEmpty()) {
+                        break;
                     }
+
+                    divs.forEach(element::next);
                 }
                 element.complete();
+            } catch (IOException e) {
+                element.error(e);
+            }
         })
                 .parallel()
                 .runOn(Schedulers.boundedElastic())
                 .map(article -> {
                     Element art = (Element) article;
-                    Elements links = art.select("a");
-                    Element link;
-                    String url;
-                    if (links.size() == 1) {
-                        link = links.get(0);
-                    } else {
-                        link = links.get(1);
-                    }
-                    try {
-                        url = checkRedirection(link.attr("href"));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    Element h3 = link.selectFirst("h3");
-                    return (Article) new News(url,
-                            h3.text(),
-                            location.getToponymName());
+                    Element link = art.select("div.flex-1.mr-3").first();
+                    Element image = art.select("source.jsx-38949707").first();
+                    Element date = art.selectFirst("div.flex.flex-row.items-center.space-x-2.text-gray-light.text-sm");
+                    Element h = link.selectFirst("h3");
+                    return (Article) new News("https://www.newsbreak.com" + link.selectFirst("a").attr("href"),
+                            h.text(),
+                            location.getToponymName(),
+                            image == null ? null : image.attr("srcset"),
+                            parseDate(date.text())
+                            );
                 })
-                .sequential()
-                .doOnComplete(()->System.out.println("t"));
+                .sequential();
     }
 
-    public String checkRedirection(String url) throws IOException {
-        String initialUrl = url;
-        Document document = Jsoup.connect(initialUrl).get();
-        Element element = document.select("div.pt-8.px-4").first();
-        if(element != null){
-            String divText = element.text();
-            initialUrl = divText.substring(15);
+    private String parseDate(String date){
+        int index = -1;
+        for (int i = 0; i < date.length(); i++) {
+            if (Character.isDigit(date.charAt(i))) {
+                index = i;
+                break;
+            }
         }
-        return initialUrl;
+
+        String dateString = (index != -1) ? date.substring(index) : "";
+        String timeNumber = dateString.substring(0, dateString.length() - 1);
+        char lastCharacter = dateString.charAt(dateString.length() - 1);
+        LocalDateTime now = LocalDateTime.now();
+        ZonedDateTime utcTime;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        switch (lastCharacter){
+            case 'd':
+                utcTime = now.atZone(ZoneId.systemDefault())
+                        .withZoneSameInstant(ZoneId.of("UTC")).minus(Integer.parseInt(timeNumber), ChronoUnit.DAYS);
+                return utcTime.format(formatter);
+            case 'h':
+                utcTime = now.atZone(ZoneId.systemDefault())
+                        .withZoneSameInstant(ZoneId.of("UTC")).minus(Integer.parseInt(timeNumber), ChronoUnit.HOURS);
+                return utcTime.format(formatter);
+            case 'm':
+                utcTime = now.atZone(ZoneId.systemDefault())
+                        .withZoneSameInstant(ZoneId.of("UTC")).minus(Integer.parseInt(timeNumber), ChronoUnit.MINUTES);
+                return utcTime.format(formatter);
+        }
+        return null;
     }
+
 }
 
 
@@ -101,18 +120,22 @@ class LinkBuilder {
 
 
 class News implements Article {
+
     private String url;
     private String title;
     private String location;
+    private String imageUrl;
+    private String time;
 
     public String toString(){
-        return title;
+        return url + "   " + title + "   " + location + "   " + imageUrl + "   " + time + "\n";
     }
-    public News(String url, String title, String location) {
+    public News(String url, String title, String location, String imageUrl, String time) {
         this.url = url;
         this.title = title;
         this.location = location;
-
+        this.imageUrl = imageUrl;
+        this.time = time;
     }
 
     @Override
@@ -147,6 +170,16 @@ class News implements Article {
     public String getLocation() {
         return location;
     }
+
+    public String getTime() {
+        return time;
+    }
+    public void setTime(String time){this.time = time;}
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+    public void setImageUrl(String imageUrl){this.imageUrl = imageUrl;}
 
     public void setLocation(String location) {
         this.location = location;

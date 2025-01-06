@@ -18,7 +18,8 @@ public class ApplicationConfig {
                         .defaultCodecs()
                         .maxInMemorySize(1024 * 1024))
                 .build();
-        HttpClient httpClient = HttpClient.create();
+        HttpClient httpClient = HttpClient.create()
+                .followRedirect(false);
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .exchangeStrategies(strategies)

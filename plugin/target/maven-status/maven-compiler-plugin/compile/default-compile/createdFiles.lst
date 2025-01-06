@@ -1,0 +1,5 @@
+org\newspipeline\T.class
+org\newspipeline\Main.class
+org\newspipeline\NewsBreakParser.class
+org\newspipeline\News.class
+org\newspipeline\LinkBuilder.class
