@@ -8,6 +8,7 @@ import debounce from 'lodash/debounce';
 import { changePage } from "./global_states/PageSlice";
 import {changePaginationVisibility} from "./global_states/Visibility"
 
+const apiUrl = import.meta.env.VITE_API_URL;
 
 function SettlementInput() {
 
@@ -23,7 +24,7 @@ function SettlementInput() {
   };
 
   const handleSettlementButtonClick = (name) => {
-    axios.get("http://localhost:80/settlement", {
+    axios.get(apiUrl + "/settlement", {
       params: {
         name: name
       }
@@ -45,7 +46,7 @@ function SettlementInput() {
       eventSource.close();  
     }
 
-    eventSource = new EventSource("http://localhost:80/news?name=" + settlement)
+    eventSource = new EventSource(apiUrl + "/news?name=" + settlement)
 
 
     const debouncedDispatch = debounce((news) => {
